@@ -1,43 +1,40 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit, least_squares
+from sklearn.cluster import k_means
 
-file = 'C:/users/kenneth1a/Pictures/capillary.png'
-array = cv2.imread(file)
-arrayGS = cv2.cvtColor(array, cv2.COLOR_BGR2GRAY)
-sobelx = cv2.Sobel(arrayGS,cv2.CV_64F, 1, 0,ksize = 3)
-sobely = cv2.Sobel(arrayGS, cv2.CV_64F, 0, 1, ksize=3)
-
-magnitude = cv2.magnitude(sobelx,sobely)
-print(magnitude)
-plt.imshow(sobelx)
-plt.show()
-plt.imshow(sobely)
-plt.show()
-plt.imshow(magnitude)
-plt.colorbar()
-plt.show()
-
-lap = cv2.Laplacian(arrayGS, cv2.CV_64F)
-lapabs = cv2.convertScaleAbs(lap)
-
-cv2.imshow('laplace', lapabs)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-def filter(array, min):
+def filter(array:np.ndarray, min=10):
     array2 = cv2.cvtColor(array, cv2.COLOR_BGR2GRAY)
     return np.where(array2 < min, 0, 255).astype(np.uint8)
 
-arrayF = filter(array,10)
+def getcapedge(array:np.ndarray,min=10):
+    a = filter(array, min=min)
+    lap = cv2.Laplacian(a, cv2.CV_64F)
+    lapa = cv2.convertScaleAbs(lap)
+    return lapa
 
-cv2.imshow('filter',arrayF)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def linear(x, m, c):
+    return m*x + c
 
-lap2 = cv2.Laplacian(arrayF, cv2.CV_64F)
-lapa2 = cv2.convertScaleAbs(lap2)
+def fitcapillary(array:np.ndarray,min=10):
+    a = filter(array,min)
+    popt,pcov = least_squares(linear,a[1],a[0])
+    return popt
 
-cv2.imshow('lap2',lapa2)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+def getedgeequation(lapimage):
+    scatter = np.where(lapimage > 0)
+    x = scatter[0]
+    y = scatter[1]
+
+def doublelinear_opt(x,y, m1, m2, c1,c2):
+    yfit1 = linear(x,m1,c1)
+    yfit2 = linear(x,m2,c2)
+    yfitall = np.append(yfit1,yfit2)
+
+def cluster(x,y, ngroups=3):
+    return k_means(np.array([x,y]).transpose(), n_clusters=ngroups)
+
+
+
+

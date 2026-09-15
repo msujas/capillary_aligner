@@ -1,5 +1,4 @@
 import socket
-import cv2
 import numpy as np
 import logging
 import types, selectors
@@ -18,6 +17,7 @@ class ImageServer():
         self.acceptedhosts=acceptedhosts
         self.host=host
         self.port = port
+        self.image:bytes=None
     def accept_wrapper(self,sock:FileDescriptorLike,sel:DefaultSelector):
         conn,addr =sock.accept()
         conn.setblocking(False)
@@ -53,7 +53,7 @@ class ImageServer():
                 #logger.info(connectionLostMessage)
                 recvData = b''
             if recvData:
-                self.v.print(recvData,plevel=1)
+                print(recvData,plevel=1)
                 data.outb += recvData
                 strmessage = data.outb.decode()
                 try:
@@ -71,7 +71,7 @@ class ImageServer():
         if mask & selectors.EVENT_WRITE:
 
             if bytemessage:
-                self.v.print(f'sending data to {data.addr}', plevel=1)
+                print(f'sending data to {data.addr}', plevel=1)
                 try:
                     sent = sock.send(bytemessage)
                     bytemessage = bytemessage[sent:]
@@ -127,3 +127,15 @@ class ImageServer():
             raise e
         finally:
             sel.close()
+
+    def decodeimage(self,imagestring:bytes):
+        stringsplit = imagestring.split(b';')
+        d1s = stringsplit[0].decode()
+        d2s = stringsplit[1].decode()
+        d3s = stringsplit[2].decode()
+        d1 = int(d1s.split('_')[1])
+        d2 = int(d2s.split('_')[1])
+        d3 = int(d3s.split('_')[1])
+        image = np.frombuffer(stringsplit[-1],dtype=np.uint8)
+        image = image.reshape(d1,d2,d3)
+        return image
