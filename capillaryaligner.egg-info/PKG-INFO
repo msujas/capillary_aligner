@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: capillaryaligner
+Version: 0.1.0
+Summary: library to help align a capillary with a client server program
+Author-email: "Kenneth P. Marshall" <kenneth.marshall@esrf.fr>
+Maintainer-email: "Kenneth P. Marshall" <kenneth.marshall@esrf.fr>
+License-Expression: GPL-3.0
+Project-URL: repository, https://github.com/msujas/capillary_aligner
+Keywords: microscope
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: opencv-python
+Requires-Dist: numpy
+Requires-Dist: scipy

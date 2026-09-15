@@ -1,0 +1,11 @@
+pyproject.toml
+capillaryaligner/capImageFinder.py
+capillaryaligner/imageclient.py
+capillaryaligner/imageencoding.py
+capillaryaligner/imageserver.py
+capillaryaligner.egg-info/PKG-INFO
+capillaryaligner.egg-info/SOURCES.txt
+capillaryaligner.egg-info/dependency_links.txt
+capillaryaligner.egg-info/entry_points.txt
+capillaryaligner.egg-info/requires.txt
+capillaryaligner.egg-info/top_level.txt

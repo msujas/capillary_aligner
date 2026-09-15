@@ -36,5 +36,13 @@ def cluster(x,y, ngroups=3):
     return k_means(np.array([x,y]).transpose(), n_clusters=ngroups)
 
 
+def centerimages(i1:np.ndarray,i2:np.ndarray, xcenter:int, motorpos:float,calibration,  minpixel=10):
+    popt1 = fitcapillary(i1, min=minpixel)
+    popt2 = fitcapillary(i2, min=minpixel)
 
-
+    y1 = linear(xcenter, popt1[0],popt1[1])
+    y2 = linear(xcenter,popt2[0], popt2[1])
+    ycenter = (y1+y2)/2
+    ymove = ycenter - y1
+    motormove = ymove * calibration
+    return motormove + motorpos

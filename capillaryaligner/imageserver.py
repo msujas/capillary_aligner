@@ -1,10 +1,9 @@
 import socket
-import numpy as np
 import logging
 import types, selectors
 from selectors import SelectorKey, DefaultSelector
-from _typeshed import FileDescriptorLike
 import os, pathlib
+import argparse
 
 logger = logging.getLogger()
 PORT = 50015
@@ -12,16 +11,27 @@ home = pathlib.Path.home()
 logfile = f'{home}/microscopeserverlog/server.log'
 os.makedirs(os.path.dirname(logfile),exist_ok=True)
 
+def getargs():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('host', type=str,help='host to run server on (default: localhost)', default='localhost', nargs='?')
+    ap.add_argument('-p','--port', type = int, default=PORT, help=f'server port number (default: {PORT})')
+    ap.add_argument('-ah','--acceptedhosts', type=str, default=None,help='comma separated list of accepted hosts')
+    args = ap.parse_args()
+    ah:str = args.acceptedhosts
+    if ah:
+        ah = ah.split(',')
+    return args.host, args.port, ah
+
 class ImageServer():
-    def __init__(self,acceptedhosts:list, host, port = PORT):
+    def __init__(self, host, port,acceptedhosts:list):
         self.acceptedhosts=acceptedhosts
         self.host=host
         self.port = port
         self.image:bytes=None
-    def accept_wrapper(self,sock:FileDescriptorLike,sel:DefaultSelector):
+    def accept_wrapper(self,sock,sel:DefaultSelector):
         conn,addr =sock.accept()
         conn.setblocking(False)
-        print(f'Accepted connection from {addr}',plevel=1)
+        print(f'Accepted connection from {addr}')
         data = types.SimpleNamespace(addr=addr,inb = b'',outb = b'')
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         sel.register(conn,events,data=data)
@@ -33,7 +43,7 @@ class ImageServer():
         connectionLostMessage = f'connection lost with client: {data.addr}'
         bytemessage = b''
         def closeConnection():
-            print(f'closing connection to {data.addr}', plevel=1)
+            print(f'closing connection to {data.addr}')
             sel.unregister(sock)
             sock.close()
         if self.acceptedhosts:
@@ -44,34 +54,41 @@ class ImageServer():
                 closeConnection()
                 return
         if mask & selectors.EVENT_READ:
-            try:
-                recvData = sock.recv(1024)
-                
-            except (ConnectionAbortedError, ConnectionResetError):
-                
-                print(connectionLostMessage)
-                #logger.info(connectionLostMessage)
-                recvData = b''
-            if recvData:
-                print(recvData,plevel=1)
-                data.outb += recvData
-                strmessage = data.outb.decode()
+            while True:
                 try:
-                    address = int(strmessage.split(';')[0])
-                    #bytemessage += bytes(fullmessage,encoding='utf-8')
-                except (ValueError, KeyError):
-                    bytemessage = b'invalid message!'
-                except ConnectionResetError:
-                    print(f'connection lost with client: {data.addr}')
-                    bytemessage = b''
+                    recvData = sock.recv(1024)
+                    
+                except (ConnectionAbortedError, ConnectionResetError):
+                    
+                    print(connectionLostMessage)
+                    #logger.info(connectionLostMessage)
+                    recvData = b''
+                if recvData:
+                    print(recvData)
+                    data.outb += recvData
+                    try:
+                        if data.outb.startswith(b'request'):
+                            bytemessage = self.image
+                            break
+                        elif data.outb.startswith(b'send') and data.outb.endswith(b'!'):
+                            self.image = data.outb
+                            bytemessage = b'received!'
+                            break
+                    except (ValueError, KeyError):
+                        bytemessage = b'invalid message!'
+                    except ConnectionResetError:
+                        print(f'connection lost with client: {data.addr}')
+                        bytemessage = b''
+                        closeConnection()
+                        break
+                else:
+                    logger.debug(f'no data received from {data.addr}')
                     closeConnection()
-            else:
-                #logger.debug(f'no data received from {data.addr}')
-                closeConnection()
+                    break
         if mask & selectors.EVENT_WRITE:
 
             if bytemessage:
-                print(f'sending data to {data.addr}', plevel=1)
+                print(f'sending data to {data.addr}')
                 try:
                     sent = sock.send(bytemessage)
                     bytemessage = bytemessage[sent:]
@@ -81,11 +98,11 @@ class ImageServer():
                     #logger.info(connectionLostMessage)
                     bytemessage = b''
                     closeConnection()
+
     def multiServer(self):
         
         loglevel = logging.INFO
-        if self.debug:
-            loglevel = logging.DEBUG
+
         logging.basicConfig(filename=logfile, level = loglevel, format = '%(asctime)s %(levelname)-8s %(message)s',
                             datefmt = '%Y/%m/%d_%H:%M:%S')
         logger.info('server started')
@@ -128,14 +145,8 @@ class ImageServer():
         finally:
             sel.close()
 
-    def decodeimage(self,imagestring:bytes):
-        stringsplit = imagestring.split(b';')
-        d1s = stringsplit[0].decode()
-        d2s = stringsplit[1].decode()
-        d3s = stringsplit[2].decode()
-        d1 = int(d1s.split('_')[1])
-        d2 = int(d2s.split('_')[1])
-        d3 = int(d3s.split('_')[1])
-        image = np.frombuffer(stringsplit[-1],dtype=np.uint8)
-        image = image.reshape(d1,d2,d3)
-        return image
+
+def startserver():
+    host, port, ah = getargs()
+    iserver = ImageServer(host,port,ah)
+    iserver.multiServer()

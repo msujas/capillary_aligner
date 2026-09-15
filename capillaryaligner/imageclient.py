@@ -1,0 +1,93 @@
+import socket
+import types, selectors
+from .imageserver import logger, PORT, home
+import pathlib
+import logging
+from .imageencoding import encodeimage, decodeimage
+from selectors import SelectorKey, DefaultSelector
+
+home = pathlib.Path.home()
+logfile = f'{home}/microscopeserverlog/client.log'
+loglevel = logging.INFO
+
+logging.basicConfig(filename=logfile, level = loglevel, format = '%(asctime)s %(levelname)-8s %(message)s',
+                    datefmt = '%Y/%m/%d_%H:%M:%S')
+
+class ImageClient():
+    def __init__(self, host, port=PORT, connid = socket.gethostname()):
+        self.host= host
+        self.port = port
+        self.connid = connid
+
+    def sendimage(self,array):
+        message = encodeimage(array)
+        return self.multiClient(message)
+    def requestimage(self):
+        data = self.multiClient(b'request!')
+        return decodeimage(data)
+
+    def multiClient(self,message):
+        sel = selectors.DefaultSelector()
+        server_addr = (self.host, self.port)
+        print(f"Starting connection {self.connid} to {server_addr}")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        #sock.setblocking(False)
+        sock.connect_ex(server_addr)
+        events = selectors.EVENT_READ | selectors.EVENT_WRITE
+        data = types.SimpleNamespace(
+            connid=self.connid,
+            msg_total=len(message),
+            recv_total=0,
+            messages=[message],
+            outb=b"",
+        )
+        sel.register(sock, events, data=data)
+        try:
+            while True:
+                events = sel.select(timeout=1)
+                if events:
+                    for key, mask in events:
+                        receivedMessage = self.service_connection(key, mask,sel)
+                        if receivedMessage:
+                            receivedMessage = receivedMessage.replace(b'!',b'')
+                # Check for a socket being monitored to continue.
+                if not sel.get_map():
+                    break
+        except KeyboardInterrupt:
+            print("Caught keyboard interrupt, exiting")
+        except Exception as e:
+            logger.exception(f'host: {self.host}, port {self.port}:\n{e}')
+            raise e
+        finally:
+            sel.close()
+        return receivedMessage
+
+    def service_connection(self,key:SelectorKey, mask:int,sel:DefaultSelector):
+        sock = key.fileobj
+        data = key.data
+        receivedMessage = b''
+        strMessage = '!'
+        if mask & selectors.EVENT_READ:
+
+            recv_data = sock.recv(1024)  # Should be ready to read
+            if recv_data:
+                #print(f"Received {recv_data!r} from connection {data.connid}")
+                receivedMessage+= recv_data
+                data.recv_total += len(recv_data)
+
+            if not recv_data or b'!' in receivedMessage:
+                print(f"Closing connection {data.connid}")
+                sel.unregister(sock)
+                sock.close()
+                if recv_data:
+                    return receivedMessage
+                return
+                
+        if mask & selectors.EVENT_WRITE:
+            if not data.outb and data.messages:
+                data.outb = data.messages.pop(0)
+            if data.outb:
+                print(f"Sending {data.outb} to connection {data.connid}")
+                sent = sock.send(data.outb)  # Should be ready to write
+                data.outb = data.outb[sent:]

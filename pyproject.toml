@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools >= 60.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "capillaryaligner"
+version = "0.1.0"
+requires-python = ">= 3.10"
+dependencies = ["opencv-python", "numpy", "scipy"]
+authors = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
+maintainers = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
+description = "library to help align a capillary with a client server program"
+readme = {file = "README.MD", content-type = "text/markdown"}
+keywords = ["microscope"]
+license = "GPL-3.0"
+license-files = ["LICENSE.md"]
+classifiers = [
+"Programming Language :: Python :: 3.12",
+"Programming Language :: Python :: 3.13"]
+
+
+
+[tool.setuptools]
+include-package-data = true
+packages = ["capillaryaligner"]
+
+[project.scripts]
+capillaryserver = "capillaryaligner.imageserver:startserver"
+
+[project.urls]
+repository = "https://github.com/msujas/capillary_aligner"

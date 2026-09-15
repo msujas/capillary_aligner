@@ -1,0 +1,2 @@
+[console_scripts]
+capillaryserver = capillaryaligner.imageserver:startserver
