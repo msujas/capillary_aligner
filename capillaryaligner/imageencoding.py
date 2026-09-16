@@ -29,7 +29,7 @@ def encodeimage(array:np.ndarray):
     bstring = zlib.compress(bstring)
     startstring = f'send_;d1_{d1};d2_{d2};d3_{d3};end;'
 
-    bstring = bytes(startstring,encoding='utf-8') + bstring + imageendstring
+    bstring = startstring.encode() + bstring + imageendstring
     return bstring
 
 

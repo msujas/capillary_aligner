@@ -37,6 +37,10 @@ class ImageServer():
         events = selectors.EVENT_READ | selectors.EVENT_WRITE
         sel.register(conn,events,data=data)
 
+    def closeConnection(self,sel:DefaultSelector, sock):
+        sel.unregister(sock)
+        sock.close()
+
     def service_connection(self,key:SelectorKey,mask:int,sel:DefaultSelector):
         sock = key.fileobj
         data = key.data
@@ -45,8 +49,7 @@ class ImageServer():
         bytemessage = b''
         def closeConnection():
             print(f'closing connection to {data.addr}')
-            sel.unregister(sock)
-            sock.close()
+            self.closeConnection(sel, sock)
         if self.acceptedhosts:
             acceptedIPs = [socket.gethostbyname(h) for h in self.acceptedhosts]
             hostName = data.addr[0]
@@ -64,6 +67,9 @@ class ImageServer():
                     print(connectionLostMessage)
                     logger.info(connectionLostMessage)
                     recvData = b''
+                except BlockingIOError as e:
+                    print('blocking error, continuing')
+                    continue
                 if recvData:
                     data.outb += recvData
                     try:
@@ -89,7 +95,7 @@ class ImageServer():
 
                 else:
                     logger.debug(f'no more data received from {data.addr}')
-                    print('no received data')
+                    print('no more received data')
                     closeConnection()
                     break
         if mask & selectors.EVENT_WRITE:
@@ -132,7 +138,7 @@ class ImageServer():
 
         try:
             while True:
-                events = sel.select(timeout=5)
+                events = sel.select()
                 for key, mask in events:
                     if key.data is None:
                         self.accept_wrapper(key.fileobj,sel)
@@ -142,7 +148,15 @@ class ImageServer():
                             allhosts.append(hostname)
                             logger.info(f'new client {hostname}')
                             print(f'connection from {hostname}')
+                        #try:
                         self.service_connection(key, mask,sel)
+                        '''
+                        except BlockingIOError as e:
+                            logger.error(e)
+                            print('blocking error, stopping connection')
+                            sel.unregister(key.fileobj)
+                            key.fileobj.close()
+                        '''
         except KeyboardInterrupt:
             logger.info('keyboard interupt')
             print("caught keyboard interrupt, exiting")

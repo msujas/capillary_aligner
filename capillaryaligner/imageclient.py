@@ -20,8 +20,9 @@ class ImageClient():
                             datefmt = '%Y/%m/%d_%H:%M:%S')
 
     def sendimage(self,array):
-        print(f'sending image to {self.host}:{self.port}')
         message = encodeimage(array)
+        print(f'sending image to {self.host}:{self.port}')
+        print(f'image length: {len(message)}')
         return self.multiClient(message)
     def requestimage(self):
         print(f'requesting image from {self.host}:{self.port}')
