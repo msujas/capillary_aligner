@@ -7,17 +7,17 @@ from .imageencoding import encodeimage, decodeimage, imageendstring
 from selectors import SelectorKey, DefaultSelector
 
 home = pathlib.Path.home()
-logfile = f'{home}/microscopeserverlog/client.log'
-loglevel = logging.INFO
-
-logging.basicConfig(filename=logfile, level = loglevel, format = '%(asctime)s %(levelname)-8s %(message)s',
-                    datefmt = '%Y/%m/%d_%H:%M:%S')
 
 class ImageClient():
     def __init__(self, host, port=PORT, connid = socket.gethostname()):
         self.host= host
         self.port = port
         self.connid = connid
+        logfile = f'{home}/microscopeserverlog/client.log'
+        loglevel = logging.INFO
+
+        logging.basicConfig(filename=logfile, level = loglevel, format = '%(asctime)s %(levelname)-8s %(message)s',
+                            datefmt = '%Y/%m/%d_%H:%M:%S')
 
     def sendimage(self,array):
         print(f'sending image to {self.host}:{self.port}')

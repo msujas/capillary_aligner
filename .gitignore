@@ -2,3 +2,4 @@ test.py
 *__pycache__
 capillaryaligner.egg-info
 build
+testserver.py

@@ -86,8 +86,10 @@ class ImageServer():
                         bytemessage = b''
                         closeConnection()
                         break
+
                 else:
-                    logger.debug(f'no data received from {data.addr}')
+                    logger.debug(f'no more data received from {data.addr}')
+                    print('no received data')
                     closeConnection()
                     break
         if mask & selectors.EVENT_WRITE:
