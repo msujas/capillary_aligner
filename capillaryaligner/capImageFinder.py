@@ -17,9 +17,10 @@ def getcapedge(array:np.ndarray,min=10):
 def linear(x, m, c):
     return m*x + c
 
-def fitcapillary(array:np.ndarray,min=10):
+def fitcapillary(array:np.ndarray,min=10, p0 = None):
     a = filter(array,min)
-    popt,pcov = least_squares(linear,a[1],a[0])
+    a2 = np.where(a > 0)
+    popt,pcov = curve_fit(linear,a2[1],a2[0], p0=p0)
     return popt
 
 def getedgeequation(lapimage):
@@ -36,7 +37,7 @@ def cluster(x,y, ngroups=3):
     return k_means(np.array([x,y]).transpose(), n_clusters=ngroups)
 
 
-def centerimages(i1:np.ndarray,i2:np.ndarray, xcenter:int, motorpos:float,calibration,  minpixel=10):
+def centerimages(i1:np.ndarray,i2:np.ndarray, xcenter:int, motorpos:float,calibration:float,  minpixel=10):
     popt1 = fitcapillary(i1, min=minpixel)
     popt2 = fitcapillary(i2, min=minpixel)
 

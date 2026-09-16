@@ -3,7 +3,7 @@ import types, selectors
 from .imageserver import logger, PORT, home
 import pathlib
 import logging
-from .imageencoding import encodeimage, decodeimage
+from .imageencoding import encodeimage, decodeimage, imageendstring
 from selectors import SelectorKey, DefaultSelector
 
 home = pathlib.Path.home()
@@ -20,11 +20,17 @@ class ImageClient():
         self.connid = connid
 
     def sendimage(self,array):
+        print(f'sending image to {self.host}:{self.port}')
         message = encodeimage(array)
         return self.multiClient(message)
     def requestimage(self):
+        print(f'requesting image from {self.host}:{self.port}')
         data = self.multiClient(b'request!')
         return decodeimage(data)
+
+    def requestimagebytes(self):
+        print(f'requesting image from {self.host}:{self.port}')
+        return self.multiClient(b'request!')
 
     def multiClient(self,message):
         sel = selectors.DefaultSelector()
@@ -49,8 +55,7 @@ class ImageClient():
                 if events:
                     for key, mask in events:
                         receivedMessage = self.service_connection(key, mask,sel)
-                        if receivedMessage:
-                            receivedMessage = receivedMessage.replace(b'!',b'')
+
                 # Check for a socket being monitored to continue.
                 if not sel.get_map():
                     break
@@ -67,27 +72,26 @@ class ImageClient():
         sock = key.fileobj
         data = key.data
         receivedMessage = b''
-        strMessage = '!'
         if mask & selectors.EVENT_READ:
-
-            recv_data = sock.recv(1024)  # Should be ready to read
-            if recv_data:
-                #print(f"Received {recv_data!r} from connection {data.connid}")
-                receivedMessage+= recv_data
-                data.recv_total += len(recv_data)
-
-            if not recv_data or b'!' in receivedMessage:
-                print(f"Closing connection {data.connid}")
-                sel.unregister(sock)
-                sock.close()
+            while True:
+                recv_data = sock.recv(1024)  # Should be ready to read
                 if recv_data:
-                    return receivedMessage
-                return
+                    #print(f"Received {recv_data!r} from connection {data.connid}")
+                    receivedMessage+= recv_data
+                    data.recv_total += len(recv_data)
+
+                if not recv_data or imageendstring in receivedMessage or b'received' in receivedMessage:
+                    print(f"Closing connection {data.connid}")
+                    sel.unregister(sock)
+                    sock.close()
+                    if recv_data:
+                        return receivedMessage
+                    return
                 
         if mask & selectors.EVENT_WRITE:
             if not data.outb and data.messages:
                 data.outb = data.messages.pop(0)
             if data.outb:
-                print(f"Sending {data.outb} to connection {data.connid}")
+                print(f"Sending data to connection {data.connid}")
                 sent = sock.send(data.outb)  # Should be ready to write
                 data.outb = data.outb[sent:]

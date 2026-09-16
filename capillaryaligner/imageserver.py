@@ -4,6 +4,7 @@ import types, selectors
 from selectors import SelectorKey, DefaultSelector
 import os, pathlib
 import argparse
+from .imageencoding import imageendstring
 
 logger = logging.getLogger()
 PORT = 50015
@@ -61,16 +62,20 @@ class ImageServer():
                 except (ConnectionAbortedError, ConnectionResetError):
                     
                     print(connectionLostMessage)
-                    #logger.info(connectionLostMessage)
+                    logger.info(connectionLostMessage)
                     recvData = b''
                 if recvData:
-                    print(recvData)
                     data.outb += recvData
                     try:
                         if data.outb.startswith(b'request'):
-                            bytemessage = self.image
+                            print('received image request. Sending data')
+                            if self.image is None:
+                                bytemessage = b'None'
+                            else:
+                                bytemessage = self.image
                             break
-                        elif data.outb.startswith(b'send') and data.outb.endswith(b'!'):
+                        elif data.outb.startswith(b'send') and data.outb.endswith(imageendstring):
+                            print(f'received image. Data length: {len(data.outb)}')
                             self.image = data.outb
                             bytemessage = b'received!'
                             break
@@ -115,7 +120,7 @@ class ImageServer():
         print(f'accepted hosts: {ahstring}')
 
         sel = selectors.DefaultSelector()
-        print('running multiServer')
+        print(f'running capillaryserver. Host: {self.host}, port: {self.port}')
         s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((self.host, self.port))
         s.listen()
