@@ -4,7 +4,7 @@ import types, selectors
 from selectors import SelectorKey, DefaultSelector
 import os, pathlib
 import argparse
-from .imageencoding import imageendstring
+from .imageencoding import IMAGEENDSTRING
 
 logger = logging.getLogger()
 PORT = 50015
@@ -80,7 +80,7 @@ class ImageServer():
                             else:
                                 bytemessage = self.image
                             break
-                        elif data.outb.startswith(b'send') and data.outb.endswith(imageendstring):
+                        elif data.outb.startswith(b'send') and data.outb.endswith(IMAGEENDSTRING):
                             print(f'received image. Data length: {len(data.outb)}')
                             self.image = data.outb
                             bytemessage = b'received!'

@@ -3,7 +3,7 @@ import types, selectors
 from .imageserver import logger, PORT, home
 import pathlib
 import logging
-from .imageencoding import encodeimage, decodeimage, imageendstring
+from .imageencoding import encodeimage, decodeimage, IMAGEENDSTRING
 from selectors import SelectorKey, DefaultSelector
 
 home = pathlib.Path.home()
@@ -81,7 +81,7 @@ class ImageClient():
                     receivedMessage+= recv_data
                     data.recv_total += len(recv_data)
 
-                if not recv_data or imageendstring in receivedMessage or b'received' in receivedMessage:
+                if not recv_data or IMAGEENDSTRING in receivedMessage or b'received' in receivedMessage:
                     print(f"Closing connection {data.connid}")
                     sel.unregister(sock)
                     sock.close()

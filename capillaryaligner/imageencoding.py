@@ -1,9 +1,11 @@
 import numpy as np
 import zlib
 
+IMAGEENDSTRING = b'!!!end!!!'
+
 def decodeimage(imagestring:bytes):
     metastring = imagestring.split(b';end;')[0].decode()
-    arraystring = zlib.decompress(imagestring.split(b';end;')[1].replace(imageendstring,b''))
+    arraystring = zlib.decompress(imagestring.split(b';end;')[1].replace(IMAGEENDSTRING,b''))
     metadata = {}
     for item in metastring.split(';'):
         if item == 'end':
@@ -29,8 +31,5 @@ def encodeimage(array:np.ndarray):
     bstring = zlib.compress(bstring)
     startstring = f'send_;d1_{d1};d2_{d2};d3_{d3};end;'
 
-    bstring = startstring.encode() + bstring + imageendstring
+    bstring = startstring.encode() + bstring + IMAGEENDSTRING
     return bstring
-
-
-imageendstring = b'!!!end!!!'
