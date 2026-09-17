@@ -138,7 +138,7 @@ class ImageServer():
 
         try:
             while True:
-                events = sel.select()
+                events = sel.select(timeout=5)
                 for key, mask in events:
                     if key.data is None:
                         self.accept_wrapper(key.fileobj,sel)
