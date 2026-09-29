@@ -1,8 +1,7 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit, least_squares
-from sklearn.cluster import k_means
+from scipy.optimize import curve_fit
+#from sklearn.cluster import k_means
 
 def filter(array:np.ndarray, min=10):
     array2 = cv2.cvtColor(array, cv2.COLOR_BGR2GRAY)
@@ -32,10 +31,10 @@ def doublelinear_opt(x,y, m1, m2, c1,c2):
     yfit1 = linear(x,m1,c1)
     yfit2 = linear(x,m2,c2)
     yfitall = np.append(yfit1,yfit2)
-
+'''
 def cluster(x,y, ngroups=3):
     return k_means(np.array([x,y]).transpose(), n_clusters=ngroups)
-
+'''
 
 def centerimages(i1:np.ndarray,i2:np.ndarray, xcenter:int, motorpos:float,calibration:float,  minpixel=10):
     popt1 = fitcapillary(i1, min=minpixel)
