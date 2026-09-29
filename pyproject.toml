@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "capillaryaligner"
 version = "0.1.0"
 requires-python = ">= 3.10"
-dependencies = ["opencv-python", "numpy", "scipy"]
+dependencies = ["opencv-python", "numpy", "scipy", "matplotlib"]
 authors = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
 maintainers = [{name = "Kenneth P. Marshall", email = "kenneth.marshall@esrf.fr"}]
 description = "library to help align a capillary with a client server program"

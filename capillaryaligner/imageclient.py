@@ -5,6 +5,7 @@ import pathlib
 import logging
 from .imageencoding import encodeimage, decodeimage, IMAGEENDSTRING
 from selectors import SelectorKey, DefaultSelector
+import matplotlib.pyplot as plt
 
 home = pathlib.Path.home()
 
@@ -32,6 +33,13 @@ class ImageClient():
     def requestimagebytes(self):
         print(f'requesting image from {self.host}:{self.port}')
         return self.multiClient(b'request!')
+
+    def plotimage(self):
+        image = self.requestimage()
+        plt.figure()
+        plt.imshow(image)
+        plt.show()
+
 
     def multiClient(self,message):
         sel = selectors.DefaultSelector()
