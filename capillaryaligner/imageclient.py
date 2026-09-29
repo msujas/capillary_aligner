@@ -6,6 +6,7 @@ import logging
 from .imageencoding import encodeimage, decodeimage, IMAGEENDSTRING
 from selectors import SelectorKey, DefaultSelector
 import matplotlib.pyplot as plt
+import cv2
 
 home = pathlib.Path.home()
 
@@ -35,7 +36,8 @@ class ImageClient():
         return self.multiClient(b'request!')
 
     def plotimage(self):
-        image = self.requestimage()
+        image = self.requestimage()       
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         plt.figure()
         plt.imshow(image)
         plt.show()
