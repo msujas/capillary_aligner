@@ -29,6 +29,9 @@ class ImageClient():
     def requestimage(self):
         print(f'requesting image from {self.host}:{self.port}')
         data = self.multiClient(b'request!')
+        if b'no image' in data:
+            print('no image currently on server')
+            return
         return decodeimage(data)
 
     def requestimagebytes(self):
@@ -44,7 +47,9 @@ class ImageClient():
         return self.multiClient(b'snapshot!')
 
     def plotimage(self, dpi = 150):
-        image = self.requestimage()       
+        image = self.requestimage()
+        if image is None:
+            return   
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         plt.figure(dpi = dpi)
         plt.imshow(image)
@@ -92,7 +97,7 @@ class ImageClient():
         sock = key.fileobj
         data = key.data
         receivedMessage = b''
-        possibleresponses = [b'received!', b'ok!', b'invalid request!',b"no image stored currently!"]
+        possibleresponses = [b'received!', b'ok!', b'invalid request!',b"no image stored currently!", b"camera not running!"]
         if mask & selectors.EVENT_READ:
             while True:
                 recv_data = sock.recv(1024)  # Should be ready to read
