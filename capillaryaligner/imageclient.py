@@ -35,6 +35,14 @@ class ImageClient():
         print(f'requesting image from {self.host}:{self.port}')
         return self.multiClient(b'request!')
 
+    def saverequest(self):
+        print(f'asking server to save an image at {self.host}:{self.port}')
+        return self.multiClient(b'save!')
+
+    def takesnapshot(self):
+        print(f'asking server to take snapshot at {self.host}:{self.port}')
+        return self.multiClient(b'snapshot!')
+
     def plotimage(self, dpi = 150):
         image = self.requestimage()       
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -83,6 +91,7 @@ class ImageClient():
         sock = key.fileobj
         data = key.data
         receivedMessage = b''
+        possibleresponses = [b'received!', b'ok!', b'invalid request!',b"no image stored currently!"]
         if mask & selectors.EVENT_READ:
             while True:
                 recv_data = sock.recv(1024)  # Should be ready to read
@@ -91,7 +100,7 @@ class ImageClient():
                     receivedMessage+= recv_data
                     data.recv_total += len(recv_data)
 
-                if not recv_data or IMAGEENDSTRING in receivedMessage or b'received' in receivedMessage:
+                if not recv_data or IMAGEENDSTRING in receivedMessage or receivedMessage in possibleresponses:
                     print(f"Closing connection {data.connid}")
                     sel.unregister(sock)
                     sock.close()
