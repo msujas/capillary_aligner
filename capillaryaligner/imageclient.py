@@ -49,6 +49,7 @@ class ImageClient():
         plt.figure(dpi = dpi)
         plt.imshow(image)
         plt.show()
+        return image
 
 
     def multiClient(self,message):
