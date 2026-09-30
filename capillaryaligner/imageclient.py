@@ -35,10 +35,10 @@ class ImageClient():
         print(f'requesting image from {self.host}:{self.port}')
         return self.multiClient(b'request!')
 
-    def plotimage(self):
+    def plotimage(self, dpi = 150):
         image = self.requestimage()       
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        plt.figure()
+        plt.figure(dpi = dpi)
         plt.imshow(image)
         plt.show()
 
